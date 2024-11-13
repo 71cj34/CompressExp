@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="tcustom.css">
+  <link rel="stylesheet" href="sheet.css">
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'" />
+  <title>CompressExp 1.0.0</title>
+</head>
+<body class="bg-brown2 flex items-center justify-center h-screen">
+  <div class="p-6 bg-mayo rounded-lg shadow-lg w-4/5 h-5/6 m-4 overflow-y-auto">
+    <label for="inputVideo" class="block text-gray-700 text-sm font-bold mb-2">Input video:</label>
+    <button id="inputVideo" class="w-full bg-brown1 hover:bg-brown3 text-amber-50 font-bold py-2 px-4 rounded focus:outline-none focus:ring focus:ring-caramel">Select Video</button>
+    <p id="selectedFile" class="text-gray-500 mt-2"></p>
+
+    <label for="crf" class="block text-gray-700 text-sm font-bold mb-2">Choose CRF quality setting (lower means larger filesize):</label>
+    <select name="crf" id="crf" class="w-full p-2 border border-gray-300 rounded mb-4">
+      <option value="1">Low</option>
+      <option value="2" selected="selected">Balanced (recommended)</option>
+      <option value="3">High</option>
+      <option value="4">Higher</option>
+      <option value="5">Very High</option>
+      <option value="6">Ultra Compression</option>
+    </select>
+
+    <label for="codec" class="block text-gray-700 text-sm font-bold mb-2">Choose output video codec:</label>
+    <select name="codec" id="codec" class="w-full p-2 border border-gray-300 rounded mb-4">
+      <option value="1">H.264</option>
+      <option value="2" selected="selected">H.265 (recommended)</option>
+    </select>
+
+    <label for="res" class="block text-gray-700 text-sm font-bold mb-2">Choose output resolution: <span class="text-red">Disabled for bugs.</span></label>
+    <select name="res" id="res" class="w-full p-2 border border-gray-300 rounded mb-4" disabled>
+      <option value="1">360p</option>
+      <option value="2">480p</option>
+      <option value="3">720p</option>
+      <option value="4" selected="selected">1080p</option>
+      <option value="5">1440p (2K)</option>
+      <option value="6">4320p (8K)</option>
+    </select>
+
+    <label for="speed" class="block text-gray-700 text-sm font-bold mb-2">Choose processing speed (higher speeds compress less):</label>
+    <select name="speed" id="speed" class="w-full p-2 border border-gray-300 rounded mb-4">
+      <option value="1">Lightning</option>
+      <option value="2">Very Fast</option>
+      <option value="3">Fast</option>
+      <option value="4" selected="selected">Balanced (recommended)</option>
+      <option value="5">Slow</option>
+      <option value="6">Very Slow</option>
+      <option value="7">Turtle</option>
+    </select>
+
+    <label for="tune" class="block text-gray-700 text-sm font-bold mb-2">Choose use case:</label>
+    <select name="tune" id="tune" class="w-full p-2 border border-gray-300 rounded mb-4">
+      <option value="1">Movie/TV</option>
+      <option value="2">Animation</option>
+      <option value="3">Movie/TV (With Grain)</option>
+      <option value="4">Slideshow/Stills</option>
+      <option value="5">Fast Loading</option>
+      <option value="6">Streaming</option>
+      <option value="7" selected="selected">None</option>
+    </select>
+
+    <label for="outputPath" class="block text-gray-700 text-sm font-bold mb-2">Output folder (leave blank for same as input): <span class="text-red">Disabled for bugs.</span></label>
+    <input type="file" name="outputPath" id="outputPath" class="w-full p-2 border border-gray-300 rounded mb-4" webkitdirectory directory multiple disabled/>
+
+    <label for="outputName" class="block text-gray-700 text-sm font-bold mb-2">Output file name:</label>
+    <input name="outputName" id="outputName" class="w-full p-2 border border-gray-300 rounded mb-4" />
+
+    <button id="start" class="w-full bg-brown1 hover:bg-brown3 text-amber-50 font-bold py-2 px-4 rounded focus:outline-none focus:ring focus:ring-caramel">Compress!</button>
+  </div>
+
+  <div id="progressPopup" class="invisible fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg">
+    <h2 class="text-lg font-bold mb-4">Compressing...</h2>
+    <div class="border-slate-700">
+        <progress id="progressBar" value="0" max="100" class="w-full mb-2 bg-zinc-800"></progress>
+    </div>
+    <p id="progressText" class="text-gray-700"></p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOMContentLoaded event fired');
+
+      document.getElementById('inputVideo').addEventListener('click', async () => {
+        const filePath = await window.electronAPI.openFileDialog();
+        if (filePath) {
+          document.getElementById('selectedFile').textContent = filePath;
+        } else {
+          document.getElementById('selectedFile').textContent = 'No file selected';
+        }
+      });
+
+      document.getElementById('start').addEventListener('click', async () => {
+        const inputVideoPath = document.getElementById('selectedFile').textContent;
+        const crf = document.getElementById('crf').value;
+        const codec = document.getElementById('codec').value;
+        const res = document.getElementById('res').value;
+        const speed = document.getElementById('speed').value;
+        const tune = document.getElementById('tune').value;
+        const outputName = document.getElementById('outputName').value;
+
+        if (inputVideoPath && inputVideoPath !== 'No file selected') {
+          if (window.electronAPI) {
+            window.electronAPI.startProcess({
+              inputVideo: inputVideoPath,
+              crf: crf,
+              codec: codec,
+              res: res,
+              speed: speed,
+              tune: tune,
+              preoutputName: outputName
+            });
+
+            document.getElementById('progressPopup').classList.remove('invisible');
+          } else {
+            console.error('electronAPI is not available');
+          }
+        } else {
+          console.error('No input video selected');
+        }
+      });
+
+      // Ensure the electronAPI is available before adding event listeners
+      if (window.electronAPI) {
+        window.electronAPI.on('ffmpeg-progress', (data) => {
+          console.log('ffmpeg-progress event received with data:', data); // Debugging statement
+
+          if (data && typeof data === 'object' && 'progress' in data && 'size' in data) {
+            const { progress, size } = data;
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
+            console.log('Progress received:', progress, size); // Debugging statement
+            console.log('Current progress bar value:', progressBar.value); // Debugging statement
+
+            // Ensure progress is a number between 0 and 100
+            if (progress >= 0 && progress <= 100) {
+              progressBar.value = progress;
+              progressText.textContent = `Processed: ${size} KB (${progress.toFixed(2)}%)`;
+            } else {
+              console.error('Invalid progress value:', progress); // Debugging statement
+            }
+          } else {
+            console.error('Invalid data received in ffmpeg-progress event:', data); // Debugging statement
+          }
+        });
+
+        window.electronAPI.on('ffmpeg-complete', () => {
+          const progressPopup = document.getElementById('progressPopup');
+          const progressBar = document.getElementById('progressBar');
+          const progressText = document.getElementById('progressText');
+
+          progressBar.value = 100;
+          progressText.textContent = `Compression complete!`;
+          setTimeout(() => {
+            progressPopup.classList.add('invisible');
+          }, 2000);
+        });
+
+        window.electronAPI.on('ffmpeg-error', ({ error }) => {
+          const progressPopup = document.getElementById('progressPopup');
+          const progressBar = document.getElementById('progressBar');
+          const progressText = document.getElementById('progressText');
+
+          progressBar.value = 0;
+          progressText.textContent = `Error: ${error}`;
+          setTimeout(() => {
+            progressPopup.classList.add('invisible');
+          }, 2000);
+        });
+
+        console.log('Event listeners added for ffmpeg-progress, ffmpeg-complete, and ffmpeg-error'); // Debugging statement
+      } else {
+        console.error('electronAPI is not available for event listeners');
+      }
+    });
+  </script>
+</body>
+</html>
