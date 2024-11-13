@@ -6,6 +6,8 @@ Currently nonfunctional! Almost finished.
 
 **Never mind, apparently this was moot as Electron is too fat and massive (I blame chromium (and node but mostly chromium)) to fit on github (over 100MB). I won't push anything until I finally finish this project and get some binaries.**
 
+### EDIT: First Windows binaries for 1.0.0 are up!
+
 # Roadmap
 - Finish app in current state
 - Reimplement disabled features (scaling, custom output locations)
